@@ -85,6 +85,8 @@ def main(
         train_utils.setup()
         # torchrun specific
         local_rank = int(os.environ["LOCAL_RANK"])
+        local_device = 'cuda:{}'.format(local_rank)
+
         rank = int(os.environ["RANK"])
         world_size = int(os.environ["WORLD_SIZE"])
 
@@ -109,7 +111,7 @@ def main(
             model_ckp = {"model": model.state_dict()}
             torch.distributed._shard.checkpoint.load_state_dict(state_dict=model_ckp, storage_reader=FileSystemReader(checkpoint_dir))
             model.load_state_dict(model_ckp['model'])
-        model.to(local_rank)
+        model.to(local_device)
 
 
     safety_checker = get_safety_checker(enable_azure_content_safety,
@@ -136,9 +138,9 @@ def main(
         model = load_peft_model(model, peft_model)
 
     model.eval()
-
-    batch = tokenizer(user_prompt, return_tensors="pt")
-    batch = {k: v.to(local_rank) for k, v in batch.items()}
+    print("local rank/device is ", local_rank, local_device)
+    batch = tokenizer(user_prompt, return_tensors="pt").to(local_device)
+    #batch = {k: v.to(local_rank) for k, v in batch.items()}
     start = time.perf_counter()
     with torch.no_grad():
         outputs = model.generate(
