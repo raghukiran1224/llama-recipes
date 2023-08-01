@@ -138,11 +138,12 @@ def main(
         model = load_peft_model(model, peft_model)
 
     model.eval()
-    print("local rank/device is ", local_rank, local_device)
     batch = tokenizer(user_prompt, return_tensors="pt").to(local_device)
-    #batch = {k: v.to(local_rank) for k, v in batch.items()}
-    print("input_ids device", batch['input_ids'].device)
-    print("model embed_tokens.device", model.module.model.embed_tokens.weight.device)
+
+    debug_str = ''
+    debug_str += "local rank/device is {} {}".format(local_rank, local_device)
+    debug_str += ";; input_ids device {}".format(batch['input_ids'].device)
+    debug_str += ";; model embed_tokens.device {}".format(model.module.model.embed_tokens.weight.device)
 
     start = time.perf_counter()
     with torch.no_grad():

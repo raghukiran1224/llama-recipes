@@ -3,9 +3,8 @@
 
 # from accelerate import init_empty_weights, load_checkpoint_and_dispatch
 
-from configs.fsdp import fsdp_config
-from configs.training import train_config
 
+from configs.fsdp import fsdp_config
 import fire
 import torch
 import os
