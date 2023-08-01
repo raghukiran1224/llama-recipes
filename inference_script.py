@@ -113,21 +113,20 @@ def main(
             model_ckp = {"model": model.state_dict()}
             torch.distributed._shard.checkpoint.load_state_dict(state_dict=model_ckp, storage_reader=FileSystemReader(checkpoint_dir))
             model.load_state_dict(model_ckp['model'])
-        #model.to(local_device)
 
 
-        # move weights back to single instance on cpu on rank 0?
-        with FSDP.state_dict_type(
-            model,
-            StateDictType.FULL_STATE_DICT,
-            FullStateDictConfig(offload_to_cpu=True, rank0_only=True),
-        ):
-            model_sd = model.state_dict()
-            model = LlamaForCausalLM(model.config)
-            model.load_state_dict(model_sd)
-            if local_rank != 0:
-                print("not rank 0, exiting")
-                exit()
+        # # move weights back to single instance on cpu on rank 0?
+        # with FSDP.state_dict_type(
+        #     model,
+        #     StateDictType.FULL_STATE_DICT,
+        #     FullStateDictConfig(offload_to_cpu=True, rank0_only=True),
+        # ):
+        #     model_sd = model.state_dict()
+        #     model = LlamaForCausalLM(model.config)
+        #     model.load_state_dict(model_sd)
+        #     if local_rank != 0:
+        #         print("not rank 0, exiting")
+        #         exit()
 
 
     print("rank {},{} continuing".format(local_rank, rank))
@@ -156,7 +155,7 @@ def main(
         model = load_peft_model(model, peft_model)
 
     model.eval()
-    batch = tokenizer(user_prompt, return_tensors="pt").to('cpu')
+    batch = tokenizer(user_prompt, return_tensors="pt").to(local_device)
 
     # debug_str = ''
     # debug_str += "local rank/device is {} {}".format(local_rank, local_device)
