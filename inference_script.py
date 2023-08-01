@@ -142,7 +142,7 @@ def main(
     batch = tokenizer(user_prompt, return_tensors="pt").to(local_device)
     #batch = {k: v.to(local_rank) for k, v in batch.items()}
     print("input_ids device", batch['input_ids'].device)
-    print("model embed_tokens.device", model.module().embed_tokens.weight.device)
+    print("model embed_tokens.device", model.module.embed_tokens.weight.device)
 
     start = time.perf_counter()
     with torch.no_grad():
