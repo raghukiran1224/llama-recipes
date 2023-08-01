@@ -148,6 +148,12 @@ def main(
 
     start = time.perf_counter()
     with torch.no_grad():
+
+        # without generate
+        outputs = model(input_ids=torch.arange(100, dtype=torch.long, device=local_device))
+        print("outputs from {}: {}".format(local_device, outputs))
+
+        # generate
         outputs = model.generate(
             **batch,
             max_new_tokens=max_new_tokens,
