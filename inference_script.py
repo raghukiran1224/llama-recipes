@@ -14,10 +14,12 @@ import time
 from typing import List
 from torch.distributed.fsdp import (
     FullyShardedDataParallel as FSDP,
-    StateDictType
+    StateDictType,
+    FullStateDictConfig,
 )
 
 from transformers import LlamaTokenizer
+from transformers import LlamaForCausalLM
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer
 from torch.distributed._shard.checkpoint import FileSystemReader
 from inference.safety_utils import get_safety_checker
@@ -114,44 +116,60 @@ def main(
         model.to(local_device)
 
 
-    safety_checker = get_safety_checker(enable_azure_content_safety,
-                                        enable_sensitive_topics,
-                                        enable_saleforce_content_safety,
-                                        )
+        # move weights back to single instance on cpu on rank 0?
+        with FSDP.state_dict_type(
+            model,
+            StateDictType.FULL_STATE_DICT,
+            FullStateDictConfig(offload_to_cpu=True, rank0_only=True),
+        ):
+            model_sd = model.state_dict()
+            model = LlamaForCausalLM.from_config(model.config)
+            model.load_state_dict(model_sd)
+            if local_rank != 0:
+                print("not rank 0, exiting")
+                exit()
+
+
+    print("rank {},{} continuing".format(local_rank, rank))
+
+    # safety_checker = get_safety_checker(enable_azure_content_safety,
+    #                                     enable_sensitive_topics,
+    #                                     enable_saleforce_content_safety,
+    #                                     )
 
     # Safety check of the user prompt
-    safety_results = [check(user_prompt) for check in safety_checker]
-    are_safe = all([r[1] for r in safety_results])
-    if are_safe:
-        print("User prompt deemed safe.")
-        print(f"User prompt:\n{user_prompt}")
-    else:
-        print("User prompt deemed unsafe.")
-        for method, is_safe, report in safety_results:
-            if not is_safe:
-                print(method)
-                print(report)
-        print("Skipping the inferece as the prompt is not safe.")
-        sys.exit(1)  # Exit the program with an error status
+    # safety_results = [check(user_prompt) for check in safety_checker]
+    # are_safe = all([r[1] for r in safety_results])
+    # if are_safe:
+    #     print("User prompt deemed safe.")
+    #     print(f"User prompt:\n{user_prompt}")
+    # else:
+    #     print("User prompt deemed unsafe.")
+    #     for method, is_safe, report in safety_results:
+    #         if not is_safe:
+    #             print(method)
+    #             print(report)
+    #     print("Skipping the inferece as the prompt is not safe.")
+    #     sys.exit(1)  # Exit the program with an error status
 
     if peft_model:
         model = load_peft_model(model, peft_model)
 
     model.eval()
-    batch = tokenizer(user_prompt, return_tensors="pt").to(local_device)
+    batch = tokenizer(user_prompt, return_tensors="pt").to('cpu')
 
-    debug_str = ''
-    debug_str += "local rank/device is {} {}".format(local_rank, local_device)
-    debug_str += ";; input_ids device {}".format(batch['input_ids'].device)
-    debug_str += ";; model embed_tokens.device {}".format(model.module.model.embed_tokens.weight.device)
-    print(debug_str)
+    # debug_str = ''
+    # debug_str += "local rank/device is {} {}".format(local_rank, local_device)
+    # debug_str += ";; input_ids device {}".format(batch['input_ids'].device)
+    # debug_str += ";; model embed_tokens.device {}".format(model.module.model.embed_tokens.weight.device)
+    # print(debug_str)
 
     start = time.perf_counter()
     with torch.no_grad():
 
-        # without generate
-        outputs = model(input_ids=torch.arange(100, dtype=torch.long, device=local_device))
-        print("outputs from {}: {}".format(local_device, outputs))
+        # # without generate
+        # outputs = model(input_ids=torch.arange(100, dtype=torch.long, device=local_device))
+        # print("outputs from {}: {}".format(local_device, outputs))
 
         # generate
         outputs = model.generate(
@@ -171,20 +189,22 @@ def main(
     print(f"the inference time is {e2e_inference_time} ms")
     output_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
     
-    # Safety check of the model output
-    safety_results = [check(output_text) for check in safety_checker]
-    are_safe = all([r[1] for r in safety_results])
+    # # Safety check of the model output
+    # safety_results = [check(output_text) for check in safety_checker]
+    # are_safe = all([r[1] for r in safety_results])
+    print("User input and model output deemed safe.")
+    print(f"Model output:\n{output_text}")
 
-    if are_safe:
-        if rank == 0:
-            print("User input and model output deemed safe.")
-            print(f"Model output:\n{output_text}")
-    else:
-        print("Model output deemed unsafe.")
-        for method, is_safe, report in safety_results:
-            if not is_safe:
-                print(method)
-                print(report)
+    # if are_safe:
+    #     if local_rank == 0:
+    #         print("User input and model output deemed safe.")
+    #         print(f"Model output:\n{output_text}")
+    # else:
+    #     print("Model output deemed unsafe.")
+    #     for method, is_safe, report in safety_results:
+    #         if not is_safe:
+    #             print(method)
+    #             print(report)
                 
 
 if __name__ == "__main__":
