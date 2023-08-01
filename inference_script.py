@@ -113,7 +113,7 @@ def main(
             model_ckp = {"model": model.state_dict()}
             torch.distributed._shard.checkpoint.load_state_dict(state_dict=model_ckp, storage_reader=FileSystemReader(checkpoint_dir))
             model.load_state_dict(model_ckp['model'])
-        model.to(local_device)
+        #model.to(local_device)
 
 
         # move weights back to single instance on cpu on rank 0?
@@ -123,7 +123,7 @@ def main(
             FullStateDictConfig(offload_to_cpu=True, rank0_only=True),
         ):
             model_sd = model.state_dict()
-            model = LlamaForCausalLM.from_config(model.config)
+            model = LlamaForCausalLM(model.config)
             model.load_state_dict(model_sd)
             if local_rank != 0:
                 print("not rank 0, exiting")
