@@ -144,6 +144,7 @@ def main(
     debug_str += "local rank/device is {} {}".format(local_rank, local_device)
     debug_str += ";; input_ids device {}".format(batch['input_ids'].device)
     debug_str += ";; model embed_tokens.device {}".format(model.module.model.embed_tokens.weight.device)
+    print(debug_str)
 
     start = time.perf_counter()
     with torch.no_grad():
