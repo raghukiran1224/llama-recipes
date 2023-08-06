@@ -80,6 +80,8 @@ def main(
 
     responses = []
     count = 0
+
+    print (f'do sample  {do_sample}')
     for user_prompt in prompts:
         user_prompt = user_prompt['prompt']
         # Safety check of the user prompt
