@@ -81,7 +81,7 @@ def main(
     responses = []
     count = 0
 
-    print (f'do sample  {do_sample}')
+    print (f'do sample  {do_sample} max_new_tokens {max_new_tokens}')
     for user_prompt in prompts:
         user_prompt = user_prompt['prompt']
         # Safety check of the user prompt
