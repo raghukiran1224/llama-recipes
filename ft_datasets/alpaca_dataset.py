@@ -12,7 +12,7 @@ from sentencepiece import SentencePieceProcessor
 from torch.utils.data import Dataset
 from typing import List
 
-RESPONSE_PROMPT = "\n\n### Response:\n"
+RESPONSE_PROMPT = "\n\n### Response:"
 
 PROMPT_DICT = {
     "prompt_input": (
