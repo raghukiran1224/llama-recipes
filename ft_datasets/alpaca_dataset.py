@@ -12,13 +12,27 @@ from sentencepiece import SentencePieceProcessor
 from torch.utils.data import Dataset
 from typing import List
 
-RESPONSE_PROMPT = "\n\n### Response:"
+RESPONSE_PROMPT = "\n\n### Response:\n{output}"
 
 PROMPT_DICT = {
     "prompt_input": (
         "Below is an instruction that describes a task, paired with an input that provides further context. "
         "Write a response that appropriately completes the request.\n\n"
         "### Instruction:\n{instruction}\n\n### Input:\n{input}"
+    ),
+    "prompt_input_llama": (
+        "<s>[INST] " \
+        "<<SYS>>\nYou are a helpful, respectful and honest assistant. " \
+        "Always answer as helpfully as possible, while being safe. " \
+        "Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. " \
+        "Please ensure that your responses are socially unbiased and positive in nature.\n\n" \
+        "If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. " \
+        "If you don't know the answer to a question, please don't share false information.\n" \
+        "<</SYS>>" \
+        "\n\nGenerate the next agent response by answering the question. " \
+        "You are provided several documents. If the answer comes from different documents please mention all possibilities and use the titles of documents to separate between topics or domains. " \
+        "If you cannot base your answer on the given documents, please state that you do not have an answer.\n\n" \
+        "{input}\n\n[question]: {instruction} [/INST]"
     ),
     "prompt_no_input": (
         "Below is an instruction that describes a task. "
@@ -48,7 +62,7 @@ class InstructionDataset(Dataset):
         if ann.get("input", "") == "":
             prompt = PROMPT_DICT["prompt_no_input"].format_map(ann)
         else:
-            prompt = PROMPT_DICT["prompt_input"].format_map(ann)
+            prompt = PROMPT_DICT["prompt_input_llama"].format_map(ann)
 
         prompt = torch.tensor(
             self.tokenizer.encode(prompt), dtype=torch.int64
