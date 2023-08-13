@@ -64,11 +64,13 @@ class InstructionDataset(Dataset):
         else:
             prompt = PROMPT_DICT["prompt_input_llama"].format_map(ann)
 
+        print(f'prompt: {prompt}')
         prompt = torch.tensor(
             self.tokenizer.encode(prompt), dtype=torch.int64
         )
 
-        response = RESPONSE_PROMPT + ann['output']
+        response = RESPONSE_PROMPT.format_map(ann)
+        print(f'response: {response}')
         response.append(self.tokenizer.eos_token_id)
 
         response = torch.tensor(
