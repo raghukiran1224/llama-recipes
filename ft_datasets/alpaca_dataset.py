@@ -74,9 +74,8 @@ class InstructionDataset(Dataset):
         #print(f'response: {response}')
 
         response = torch.tensor(
-            self.tokenizer.encode(response), dtype=torch.int64
+            self.tokenizer.encode(response).append(self.tokenizer.eos_token_id), dtype=torch.int64
         )
-        response.append(self.tokenizer.eos_token_id)
 
         padding = self.max_words - (prompt.shape[0] + response.shape[0])
         if padding > 0:
