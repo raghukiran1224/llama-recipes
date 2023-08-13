@@ -71,7 +71,7 @@ class InstructionDataset(Dataset):
         )
 
         response = RESPONSE_PROMPT.format_map(ann)
-        print(f'response: {response}')
+        #print(f'response: {response}')
         response = self.tokenizer.encode(response)
         response.append(self.tokenizer.eos_token_id)
 
