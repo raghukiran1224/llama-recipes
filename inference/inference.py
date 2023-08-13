@@ -129,7 +129,7 @@ def main(
         are_safe = all([r[1] for r in safety_results])
         if are_safe:
             print("User input and model output deemed safe.")
-            print(f"Model output:\n{output_text}")
+            #print(f"Model output:\n{output_text}")
 
         else:
             print("Model output deemed unsafe.")
@@ -138,6 +138,7 @@ def main(
                     print(method)
                     print(report)
         count += 1
+        print(f'finished {count} queries')
 
     if output_file:
         json.dump(responses, fout, indent=4)
