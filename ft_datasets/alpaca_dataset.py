@@ -62,6 +62,7 @@ class InstructionDataset(Dataset):
         )
 
         padding = self.max_words - (prompt.shape[0] + response.shape[0])
+        print (f'padding:  {padding}' )
         if padding > 0:
             example = torch.cat((prompt, response))
             example = torch.cat((example, torch.zeros(padding, dtype=torch.int64) - 1))
