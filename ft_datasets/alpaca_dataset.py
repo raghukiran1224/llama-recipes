@@ -63,7 +63,7 @@ class InstructionDataset(Dataset):
         if ann.get("input", "") == "":
             prompt = PROMPT_DICT["prompt_no_input"].format_map(ann)
         else:
-            prompt = PROMPT_DICT["prompt_input_llama"].format_map(ann)
+            prompt = PROMPT_DICT["prompt_input"].format_map(ann)
 
         #print(f'prompt: {prompt}')
         prompt = torch.tensor(
