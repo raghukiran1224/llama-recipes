@@ -12,7 +12,7 @@ from sentencepiece import SentencePieceProcessor
 from torch.utils.data import Dataset
 from typing import List
 
-RESPONSE_PROMPT = "\n\n### Response:"
+RESPONSE_PROMPT = "\n\n### Response:{output}"
 
 PROMPT_DICT = {
     "prompt_input": (
@@ -54,11 +54,12 @@ class InstructionDataset(Dataset):
             self.tokenizer.encode(prompt), dtype=torch.int64
         )
 
-        response = RESPONSE_PROMPT + ann['output']
+        response = RESPONSE_PROMPT.format_map(ann)
+        response = self.tokenizer.encode(response)
         response.append(self.tokenizer.eos_token_id)
 
         response = torch.tensor(
-            self.tokenizer.encode(response), dtype=torch.int64
+            response, dtype=torch.int64
         )
 
         padding = self.max_words - (prompt.shape[0] + response.shape[0])
@@ -68,7 +69,6 @@ class InstructionDataset(Dataset):
             example = torch.cat((example, torch.zeros(padding, dtype=torch.int64) - 1))
         # we truncate the prompt and always keep the response
         elif padding <= 0:
-            print ('Truncating...')
             prompt = prompt[: self.max_words - response.shape[0]]
             example = torch.cat((prompt, response))
 
