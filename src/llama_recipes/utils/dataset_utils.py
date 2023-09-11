@@ -7,12 +7,9 @@ from pathlib import Path
 
 import torch
 
-from llama_recipes.datasets import (
-    get_grammar_dataset,
-    get_alpaca_dataset,
-    get_samsum_dataset,
-)
-
+from llama_recipes.datasets import get_grammar_dataset as grammar_dataset
+from llama_recipes.datasets import get_alpaca_dataset as alpaca_dataset
+from llama_recipes.datasets import get_samsum_dataset as samsum_dataset
 
 def load_module_from_py_file(py_file: str) -> object:
     """
@@ -50,9 +47,9 @@ def get_custom_dataset(dataset_config, tokenizer, split: str):
     
 
 DATASET_PREPROC = {
-    "alpaca_dataset": partial(get_alpaca_dataset, max_words=224),
-    "grammar_dataset": get_grammar_dataset,
-    "samsum_dataset": get_samsum_dataset,
+    "alpaca_dataset": partial(alpaca_dataset, max_words=2048),
+    "grammar_dataset": grammar_dataset,
+    "samsum_dataset": samsum_dataset,
     "custom_dataset": get_custom_dataset,
 }
 
